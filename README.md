@@ -1,78 +1,59 @@
-# FinRelief AI 🧾
+# FinRelief AI
 
-> **Technical Documentation & Setup Guide**
+A full-stack app for tracking debt, running settlement math, and drafting negotiation letters. Built during my SmartBridge internship.
 
-*For deep context on the project's purpose, use cases, and a visual walkthrough, please read [ABOUT.md](ABOUT.md).*
+For the "why" behind this project and a walkthrough of what it looks like, read [ABOUT.md](ABOUT.md). This file is just the setup.
 
----
+## Stack
 
-## 🚀 Overview
+- **Backend:** FastAPI — quick to build with, and Swagger docs come for free
+- **Database:** SQLite + SQLAlchemy — no setup overhead for something this size
+- **AI:** Google Gemini (`gemini-1.5-flash`) — writes the negotiation letters
+- **Auth:** bcrypt + JWT (python-jose)
+- **Frontend:** plain HTML/CSS/JS served straight from FastAPI — no build step, no framework to fight with
 
-FinRelief AI is a full-stack web application designed to help users manage their debt, calculate realistic settlement options, and generate AI-powered negotiation letters.
+## Running it locally
 
-### Tech Stack
-
-| Layer | Tech | Why |
-|---|---|---|
-| **Backend** | FastAPI (Python) | Fast, auto-documented REST API |
-| **Database** | SQLite + SQLAlchemy | Zero-config, stores users/loans/letters/history |
-| **AI** | Google Gemini API (`gemini-1.5-flash`) | Powers the letter generation |
-| **Auth** | bcrypt + python-jose JWT | Secure password hashing + token auth |
-| **Frontend** | Vanilla HTML + CSS + JS | Served directly by FastAPI, no build step |
-
----
-
-## 🛠 Getting Started
-
-### 1. Clone the repo
+1. Clone it:
 ```bash
-git clone https://github.com/Sridattasai18/Fin-track-prototype.git
-cd Fin-track-prototype
+git clone https://github.com/Sridattasai18/Fin-relief-prototype.git
+cd Fin-relief-prototype
 ```
 
-### 2. Set up your environment
+2. Copy the env file and fill it in:
 ```bash
-# Copy the example env file
 cp .env.example .env
 ```
 
-Open `.env` and fill in two values:
-
+You need two values:
 ```env
-GEMINI_API_KEY=your_key_here       # get free at https://aistudio.google.com/app/apikey
-FINRELIEF_SECRET_KEY=your_secret   # generate: python -c "import secrets; print(secrets.token_hex(32))"
+GEMINI_API_KEY=your_key_here       # free at https://aistudio.google.com/app/apikey
+FINRELIEF_SECRET_KEY=your_secret   # python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-> **The Gemini API key is optional.** If you skip it, letters will be generated using a professional template instead. The rest of the app works perfectly without it.
+Skipping the Gemini key is fine — the app just falls back to a template letter instead of an AI-written one. Everything else works the same either way.
 
-### 3. Install dependencies
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run the server
+4. Run it:
 ```bash
 uvicorn main:app --reload --port 8000
 ```
 
-### 5. Open the app
-Go to **[http://localhost:8000](http://localhost:8000)** in your browser.
+5. Open [http://localhost:8000](http://localhost:8000)
 
-The database (`finrelief.db`) is created automatically on first run.
+The SQLite file (`finrelief.db`) gets created automatically the first time you run it.
 
----
+## Want to see the UI without setting anything up?
 
-## 🎨 Instant Offline UI Demo
+Open `finrelief-design-prototype.html` directly in your browser. It's a static mockup running on fake data — no server, no dependencies, just to get a feel for the layout.
 
-If you want to see how the app looks and feels **before running any servers or installing dependencies**, you can open the static file **[finrelief-design-prototype.html](file:///c:/Users/kalig/OneDrive/Desktop/SMARTBRIDGE-PROJ/Fin-track-prototype/finrelief-design-prototype.html)** directly in your browser. It runs completely offline with mock data, letting you explore the layout immediately.
+## API
 
----
-
-## 📖 API Documentation
-
-Once the server is running, visit **[http://localhost:8000/docs](http://localhost:8000/docs)** for the full interactive Swagger UI — every endpoint is documented and testable from the browser.
-
-### Quick reference
+Once the server's running, the full interactive docs are at [http://localhost:8000/docs](http://localhost:8000/docs). Short version below:
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -90,52 +71,42 @@ Once the server is running, visit **[http://localhost:8000/docs](http://localhos
 | `GET` | `/letters` | All past letters |
 | `GET` | `/health` | Server health + Gemini status |
 
----
-
-## 📁 Project Structure
+## Project layout
 
 ```
-Fin-track-prototype/
-├── main.py                  ← FastAPI backend (API + serves frontend)
-├── requirements.txt         ← Python dependencies
-├── .env                     ← Your secrets (not committed to git)
-├── .env.example             ← Template to copy from
-├── .gitignore
-├── README.md                ← Technical documentation
-├── ABOUT.md                 ← Project context & visual walkthrough
-├── LICENSE                  ← MIT License
+Fin-relief-prototype/
+├── main.py                  # FastAPI backend — API + serves the frontend
+├── requirements.txt
+├── .env                     # your secrets, not committed
+├── .env.example
+├── README.md                # this file
+├── ABOUT.md                 # project context + screenshots
+├── LICENSE
 │
 ├── templates/
-│   └── index.html           ← The frontend HTML
+│   └── index.html
 │
 └── static/
-    ├── css/
-    │   └── style.css        ← All styles
-    └── js/
-        └── app.js           ← All frontend logic + API calls
+    ├── css/style.css
+    └── js/app.js
 ```
 
----
+## Security notes
 
-## 🔒 Security Notes
+- `.env` and `finrelief.db` are both gitignored — your key and any user data never end up in the repo
+- Passwords are bcrypt-hashed, never stored or returned as plaintext
+- JWTs expire after 24 hours
 
-- `.env` is in `.gitignore` — your API key and JWT secret are **never committed**
-- Passwords are **bcrypt-hashed** — never stored or returned in plaintext  
-- JWT tokens expire after **24 hours**
-- The database file (`finrelief.db`) is also gitignored — no user data in the repo
+If you're actually deploying this somewhere instead of running it locally:
+- Don't rely on `.env` in production — set `FINRELIEF_SECRET_KEY` as a real environment variable
+- Lock down CORS — it's wide open (`*`) right now because that's fine for local dev, not for prod
+- Add rate limiting to `/auth/login` before it's public
+- Move off SQLite to Postgres if more than one person will use it
 
-**Before any public deployment:**
-- Set a real `FINRELIEF_SECRET_KEY` via environment variable (not just `.env`)
-- Restrict CORS to your actual frontend domain (currently `*` for local dev)
-- Consider adding rate limiting to `/auth/login` to prevent brute-force attacks
-- Switch to PostgreSQL for anything beyond local/demo use
+## License
 
----
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. You are free to modify and use it, but please do not run it in production with real financial data without the necessary security hardening.
+MIT. Use it, change it, ship it — just don't run real people's financial data through this without adding proper security first.
 
 ---
 
-*Built as part of a SmartBridge project. Financial calculations are illustrative — always consult a certified financial advisor for real debt settlement decisions.*
+Built as part of a SmartBridge project. The settlement numbers are illustrative — talk to an actual financial advisor before making real decisions with your debt.
